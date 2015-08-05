@@ -21,24 +21,32 @@ class ProcessManager extends EventEmitter
         nodePath = @atom.config.get('node-debugger.nodePath')
         appArgs = @atom.config.get('node-debugger.appArgs')
         port = @atom.config.get('node-debugger.debugPort')
-
+        isCustomApp = @atom.config.get('node-debugger.isCustomApp')
+        
         appPath = @atom
           .workspace
           .getActiveTextEditor()
           .getPath()
-
-        args = [
-          "--debug-brk=#{port}"
-          file or appPath
-          appArgs or ''
-        ]
-
+  
+        if not isCustomApp
+          args = [
+            "--debug-brk=#{port}"
+            file or appPath
+            appArgs or ''
+          ]
+        else
+          args = [
+            file or appPath
+            port
+          ]
+  
         logger.error 'spawn', dropEmpty(args)
-
+  
         @process = childprocess.spawn nodePath, dropEmpty(args), {
           detached: true
           cwd: path.dirname(args[1])
         }
+        
 
         @process.stdout.on 'data', (d) ->
           logger.info 'child_process', d.toString()
