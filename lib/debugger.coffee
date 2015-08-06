@@ -22,12 +22,12 @@ class ProcessManager extends EventEmitter
         appArgs = @atom.config.get('node-debugger.appArgs')
         port = @atom.config.get('node-debugger.debugPort')
         isCustomApp = @atom.config.get('node-debugger.isCustomApp')
-        
+
         appPath = @atom
           .workspace
           .getActiveTextEditor()
           .getPath()
-  
+
         if not isCustomApp
           args = [
             "--debug-brk=#{port}"
@@ -39,14 +39,14 @@ class ProcessManager extends EventEmitter
             file or appPath
             port
           ]
-  
+
         logger.error 'spawn', dropEmpty(args)
-  
+
         @process = childprocess.spawn nodePath, dropEmpty(args), {
           detached: true
           cwd: path.dirname(args[1])
         }
-        
+
 
         @process.stdout.on 'data', (d) ->
           logger.info 'child_process', d.toString()
@@ -121,8 +121,9 @@ class Debugger extends EventEmitter
     @onBreak = @onBreakEvent.listen
     @onAddBreakpoint = @onAddBreakpointEvent.listen
     @onRemoveBreakpoint = @onRemoveBreakpointEvent.listen
-    @processManager.on 'procssCreated', @start
-    @processManager.on 'processEnd', @cleanup
+    if not @atom.config.get('node-debugger.standalone')
+      @processManager.on 'procssCreated', @start
+      @processManager.on 'processEnd', @cleanup
     @markers = []
 
   stopRetrying: ->
@@ -321,10 +322,10 @@ class Debugger extends EventEmitter
     @emit 'connected'
     @client.on 'close', =>
       logger.info 'debugger', 'connection closed'
-
-      @processManager.cleanup()
-        .then =>
-          @emit 'close'
+      if @processManager
+        @processManager.cleanup()
+          .then =>
+            @emit 'close'
 
   lookup: (ref) ->
     new Promise (resolve, reject) =>

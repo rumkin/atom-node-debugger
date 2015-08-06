@@ -43,11 +43,18 @@ module.exports =
     isCustomApp:
       type: 'boolean'
       default: false
+    standalone:
+      type: 'boolean'
+      default: false
 
   activate: () ->
     @disposables = new CompositeDisposable()
-    processManager = new ProcessManager(atom)
-    _debugger = new Debugger(atom, processManager)
+    if not atom.config.get('node-debugger.standalone')
+      processManager = new ProcessManager(atom)
+      _debugger = new Debugger(atom, processManager)
+    else
+      _debugger = new Debugger(atom)
+
     initNotifications(_debugger)
     @disposables.add atom.commands.add('atom-workspace', {
       'node-debugger:start-resume': @startOrResume
